@@ -3,7 +3,7 @@ name: Woow Nginx Proxy Manager
 version: 2.12.4
 slug: woow-nginxproxymanager
 description: Manage Nginx proxy hosts with a simple, powerful interface - WOOWTECH edition
-url: https://github.com/WOOWTECH/Woow_nginxpm_docker_compose_all
+url: https://github.com/WOOWTECH/Woow_ha_nginxpm
 webui: http://[HOST]:[PORT:81]
 startup: services
 init: false
