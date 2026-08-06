@@ -59,6 +59,12 @@ RUN \
 # ── Stage 3: fetch and patch upstream sources ──────────────────────────
 # curl gets -f so an HTML 404 page is a hard failure here rather than a
 # confusing tar error two commands later.
+#
+# The patch loop reports the failing FILE and patch's exit code before
+# bailing. Without that, a failure reaches the log as a bare `exit 1` after
+# the relevant "Applying ..." line has already scrolled out of the build
+# output Supervisor keeps. --batch --forward stops patch prompting for input
+# in a non-interactive build and makes an already-applied hunk a no-op.
 RUN \
     set -x \
     && curl -fJ -L -o /tmp/nginxproxymanager.tar.gz \
@@ -68,8 +74,15 @@ RUN \
         /tmp/nginxproxymanager.tar.gz \
         --strip 1 -C /app \
     && for i in /usr/src/*.patch; do \
-        echo "Applying ${i}"; \
-        patch -d /app -p 1 < "${i}" || exit 1; \
+        echo "=== APPLYING $(basename "${i}")"; \
+        if patch -d /app -p 1 --batch --forward < "${i}"; then \
+            echo "=== OK $(basename "${i}")"; \
+        else \
+            rc=$?; \
+            echo "=== FAILED $(basename "${i}") (patch exit ${rc})"; \
+            find /app -name '*.rej' -print -exec cat {} \; ; \
+            exit 1; \
+        fi; \
     done \
     && rm -f /tmp/nginxproxymanager.tar.gz
 
