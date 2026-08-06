@@ -1,6 +1,6 @@
 ---
 name: Woow Nginx Proxy Manager
-version: 2.12.4
+version: "2.12.4"
 slug: woow-nginxproxymanager
 description: Manage Nginx proxy hosts with a simple, powerful interface - WOOWTECH edition
 url: https://github.com/WOOWTECH/Woow_ha_nginxpm
@@ -19,4 +19,3 @@ map:
   - addon_config:rw
 backup_exclude:
   - "*/logs"
-image: woowtech/woow-nginxproxymanager
