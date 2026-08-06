@@ -87,6 +87,19 @@ RUN \
     && rm -f /tmp/nginxproxymanager.tar.gz
 
 # ── Stage 4: build, assemble, clean ────────────────────────────────────
+# The logrotate config upstream NPM ships is written for the standalone NPM
+# image and is wrong twice over inside an add-on. It rotates /data/logs, but
+# patch 0001 moves all state to /config; and it declares `su npm npm`, while
+# this image has no npm user — the same reason nginx.conf gets switched to
+# `user root` a few lines down. logrotate treats an unknown user as fatal for
+# the whole block, so NPM's rotation timer logged a CommandError plus a stack
+# trace on every fire and rotated nothing. (Upstream hassio-addons has the
+# identical defect.)
+#
+# The `logrotate --debug` call is the guard, not decoration: it exits 1 on the
+# unpatched file and 0 on the patched one. If upstream ever reformats the file
+# out from under these seds, the build fails here instead of silently shipping
+# a broken timer again.
 # hadolint ignore=DL3003,DL3042
 RUN \
     set -x \
@@ -116,6 +129,11 @@ RUN \
     \
     && cp /app/docker/rootfs/etc/letsencrypt.ini /etc \
     && cp /app/docker/rootfs/etc/logrotate.d/nginx-proxy-manager /etc/logrotate.d \
+    && sed -i \
+        -e 's#/data/logs/#/config/logs/#g' \
+        -e '/^[[:space:]]*su npm npm[[:space:]]*$/d' \
+        /etc/logrotate.d/nginx-proxy-manager \
+    && logrotate --debug /etc/logrotate.d/nginx-proxy-manager \
     \
     && sed -i "s#user npm;#user root;#" /etc/nginx/nginx.conf \
     && sed -i "s#root /app/frontend;#root /opt/nginx-proxy-manager/frontend;#" \
