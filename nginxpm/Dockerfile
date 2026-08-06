@@ -11,11 +11,15 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # Copy patches
 COPY patches/*.patch /usr/src/
 
-# Setup base
 ARG NGINX_PROXY_MANAGER_VERSION="v2.12.4"
-# hadolint ignore=DL3003,DL3042
+
+# ── Stage 1: system packages ────────────────────────────────────────────
+# Kept separate from the rest: this is the layer most likely to break when
+# Alpine moves, and merging it into the build made failures undiagnosable.
+# hadolint ignore=DL3018
 RUN \
-    apk upgrade --no-cache libssl3 libcrypto3 \
+    set -x \
+    && apk upgrade --no-cache libssl3 libcrypto3 \
     && apk add --no-cache --virtual .build-dependencies \
         build-base \
         git \
@@ -36,20 +40,34 @@ RUN \
         openssl \
         py3-pip \
         python3 \
-        yarn \
-    \
-    && yarn global add modclean \
-    \
-    && curl -J -L -o /tmp/nginxproxymanager.tar.gz \
+        yarn
+
+# ── Stage 2: modclean (global yarn package) ─────────────────────────────
+RUN \
+    set -x \
+    && yarn global add modclean
+
+# ── Stage 3: fetch and patch upstream sources ──────────────────────────
+# curl gets -f so an HTML 404 page is a hard failure here rather than a
+# confusing tar error two commands later.
+RUN \
+    set -x \
+    && curl -fJ -L -o /tmp/nginxproxymanager.tar.gz \
         "https://github.com/NginxProxyManager/nginx-proxy-manager/archive/${NGINX_PROXY_MANAGER_VERSION}.tar.gz" \
     && mkdir /app \
-    && tar zxvf \
+    && tar zxf \
         /tmp/nginxproxymanager.tar.gz \
         --strip 1 -C /app \
-    \
     && for i in /usr/src/*.patch; do \
-        patch -d /app -p 1 < "${i}"; done \
-    \
+        echo "Applying ${i}"; \
+        patch -d /app -p 1 < "${i}" || exit 1; \
+    done \
+    && rm -f /tmp/nginxproxymanager.tar.gz
+
+# ── Stage 4: build, assemble, clean ────────────────────────────────────
+# hadolint ignore=DL3003,DL3042
+RUN \
+    set -x \
     && cd /app/frontend \
     && yarn install --ignore-engines --network-timeout 100000 \
     && yarn build --ignore-engines \
