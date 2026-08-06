@@ -16,9 +16,18 @@ ARG NGINX_PROXY_MANAGER_VERSION="v2.12.4"
 # ── Stage 1: system packages ────────────────────────────────────────────
 # Kept separate from the rest: this is the layer most likely to break when
 # Alpine moves, and merging it into the build made failures undiagnosable.
+#
+# The `sed` on /etc/apk/world is load-bearing. Base images record the exact
+# package builds present when they were made — e.g. `libssl3=3.5.4-r0` — as
+# hard constraints in world. Alpine publishes new revisions continuously, so
+# those pins go stale and then EVERY apk operation in the image fails to
+# resolve, including installs unrelated to the pinned package. Stripping the
+# constraints leaves the package NAMES, so world still describes what the
+# image actually contains and nothing gets purged.
 # hadolint ignore=DL3018
 RUN \
     set -x \
+    && sed -i 's/[<>=~].*$//' /etc/apk/world \
     && apk upgrade --no-cache libssl3 libcrypto3 \
     && apk add --no-cache --virtual .build-dependencies \
         build-base \
