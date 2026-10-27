@@ -1,0 +1,5 @@
+"2.12.4-v3":
+  breaking:
+    - change: port-removed
+      key: 81/tcp
+      migration: Test declaration for release-gating #121; never merged.
