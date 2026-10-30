@@ -1,11 +1,12 @@
 name: CI
 
 # Required check for the default branch (WOOW addon pipeline #88). The App
-# Store ships this repository's default branch head (registry ref_policy:
-# main) only after this workflow succeeded on that commit, so it runs on
-# every push to main, docs-only included, and on every pull request. It
-# validates each add-on and builds its amd64 image the way a Home Assistant
-# host builds it locally.
+# Store ships only published Releases of this repository (registry
+# ref_policy: release, pipeline #134). Every push to main and every pull
+# request validates each add-on and builds its amd64 image the way a Home
+# Assistant host builds it locally; when that passes on main, the Store's
+# shared workflow publishes the Release for a config.yaml version that has
+# none yet. A version that is already released is left alone.
 
 on:
   push:
@@ -60,6 +61,14 @@ jobs:
               < <(python3 -c 'import sys, yaml; [print(f"{k}={v}") for k, v in ((yaml.safe_load(open(sys.argv[1])) or {}).get("args") or {}).items()]' "${ADDON}/build.yaml")
           fi
           docker build "${args[@]}" -t "local/${ADDON}:${VERSION}" "${ADDON}"
+
+  release:
+    name: Release
+    needs: validate
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    uses: WOOWTECH/Woow_HA_App_Store/.github/workflows/woow-addon-release.yml@main
 
   # Upgrade comparison (WOOW addon pipeline #89): a PR that changes an addon
   # version is compared with the version users run now; undeclared breaking
