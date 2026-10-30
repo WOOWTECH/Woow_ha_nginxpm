@@ -7,11 +7,11 @@
       "name": "Woow Nginx Proxy Manager",
       "version": "2.12.4-v2",
       "repository": "WOOWTECH/Woow_ha_nginxpm",
-      "source_sha": "4a50fb35dda3c6067fbb2fe96f5ee5ff0a10377b",
+      "source_sha": "2647111c40f0be416000b00af83f21458a2bf53f",
       "source_path": "nginxpm",
       "config_file": "config.yaml",
       "config_sha256": "sha256:dce7a0ea626118eaa0b84543d10e288e1bc1a1e875d416ff50bf3ac75728a48a",
-      "archive_sha256": "sha256:a977c99350857d28e15634b7748f23e0b37eb280f5f17b716601f7e1337cba14",
+      "archive_sha256": "sha256:200d374380d299b12d3d6832f3179a2a0135b51c32b858c575142dce0ad1a9e9",
       "context_fingerprint": "sha256:a2a194b9a4ca0e22396f8cbdaec47fb6bc784dc6b7515ac4750333ed84f3a604",
       "material_fingerprint": "sha256:8102929dcb898ea8f5cd00de849fc7fc0a46ad748aadc56c54b08d06005d96d7",
       "architectures": [
@@ -48,7 +48,7 @@
       "images": {},
       "delivery": "local-source-build",
       "validation": "manifest+source-context+configured-CI (runtime build not certified)",
-      "publisher_run_id": "38366695484",
+      "publisher_run_id": "41026445211",
       "channel": "stable"
     }
   }
